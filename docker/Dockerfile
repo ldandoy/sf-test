@@ -17,3 +17,5 @@ RUN docker-php-ext-configure intl
 RUN docker-php-ext-install pdo pdo_mysql opcache intl zip calendar dom mbstring gd xsl &&  pecl install apcu && docker-php-ext-enable apcu
 
 WORKDIR /var/www/
+
+RUN git config --global user.email "ldandoy@overconsulting.net" && git config --global user.name "Loïc DANDOY"
