@@ -67,6 +67,16 @@ composer-install: ## Install dependencies
 composer-update: ## Update dependencies
 	$(COMPOSER) update
 
+ifeq (composer-req,$(firstword $(MAKECMDGOALS)))
+	# use the rest as arguments for "run"
+	RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+	# ...and turn them into do-nothing targets
+	$(eval $(RUN_ARGS):;@:)
+endif
+
+composer-req:
+	$(COMPOSER) require $(RUN_ARGS)
+
 ## —— 🐈 NPM —————————————————————————————————————————————————————————————————
 npm-install: ## Install all npm dependencies
 	$(NPM) install
@@ -76,6 +86,16 @@ npm-update: ## Update all npm dependencies
 
 npm-watch: ## Update all npm dependencies
 	$(NPM) run watch
+
+ifeq (npm-i,$(firstword $(MAKECMDGOALS)))
+	# use the rest as arguments for "run"
+	RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+	# ...and turn them into do-nothing targets
+	$(eval $(RUN_ARGS):;@:)
+endif
+
+npm-i:
+	$(NPM) install $(RUN_ARGS)
 
 ## —— 📊 Database ——
 database-init: ## Init database

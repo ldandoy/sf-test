@@ -22,7 +22,9 @@
 			</div>
 			<div>
 				<div class="sticky top-24">
-
+					{% include "components/_search_data.html.twig" with {
+						form: form ?? null
+					} only %}
 				</div>
 			</div>
 		</div>

@@ -2,7 +2,10 @@
 
 namespace App\Repository;
 
+use App\Entity\Post\Tag;
 use App\Entity\Post\Post;
+use App\Entity\Post\Category;
+use App\Model\SearchData;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Knp\Component\Pager\PaginatorInterface;
@@ -35,18 +38,73 @@ class PostRepository extends ServiceEntityRepository
      * 
      * @return PaginationInterface
      */
-    public function findPublished(int $page) {
+    public function findPublished(
+        int $page,
+        ?Category $category = null,
+        ?Tag $tag = null,
+    ): PaginationInterface {
         $data = $this->createQueryBuilder('p')
             ->where('p.state LIKE :state')
             ->setParameter('state', '%STATE_PUBLISHED%')
             ->addOrderBy('p.createdAt', 'DESC');
 
+        if (isset($category)) {
+            $data = $data
+                ->join('p.categories', 'c')
+                ->andWhere(':category IN (c)')
+                ->setParameter('category', $category);
+        }
+
+        if (isset($tag)) {
+            $data = $data
+                ->join('p.tags', 't')
+                ->andWhere(':tag IN (t)')
+                ->setParameter('tag', $tag);
+        }
+
         $data->getQuery()
             ->getResult();
-
 
         $posts = $this->paginatorInterface->paginate($data, $page, 9);
 
         return $posts;
     }
+
+    /**
+     * Get published posts thanks to Search Data value
+     *
+     * @param SearchData $searchData
+     * @return PaginationInterface
+     */
+    public function findBySearch(SearchData $searchData): PaginationInterface
+    {
+        $data = $this->createQueryBuilder('p')
+            ->where('p.state LIKE :state')
+            ->setParameter('state', '%STATE_PUBLISHED%')
+            ->addOrderBy('p.createdAt', 'DESC');
+
+        if (!empty($searchData->q)) {
+            $data = $data
+                ->join('p.tags', 't')
+                ->andWhere('p.title LIKE :q')
+                ->orWhere('t.name LIKE :q')
+                ->setParameter('q', "%{$searchData->q}%");
+        }
+
+        if (!empty($searchData->categories)) {
+            $data = $data
+                ->join('p.categories', 'c')
+                ->andWhere('c.id IN (:categories)')
+                ->setParameter('categories', $searchData->categories);
+        }
+
+        $data = $data
+            ->getQuery()
+            ->getResult();
+
+        $posts = $this->paginatorInterface->paginate($data, $searchData->page, 9);
+
+        return $posts;
+    }
+
 }
